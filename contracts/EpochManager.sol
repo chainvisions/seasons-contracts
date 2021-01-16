@@ -11,7 +11,7 @@ contract EpochManager {
 
     struct Epoch {
         uint256 epochNo;
-        uint256 burnPeriodStartTime;
+        uint256 emissionPeriodEndTime;
         bool seedBurnEnabled;
     }
 
@@ -23,12 +23,6 @@ contract EpochManager {
     uin256 public emissionPeriodDuration;
     // Epoch variable
     Epoch public epochs;
-
-    struct Epoch {
-        uint256 epochNo;
-        uint256 emissionPeriodEndTime;
-        bool seedBurnEnabled;
-    }
 
     // Events for monitoring epoch advancements, BERRY burns and SEED burns.
     event SeedsBurned(uint256 indexed burned, address indexed burner);
