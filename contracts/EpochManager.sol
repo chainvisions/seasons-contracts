@@ -89,4 +89,8 @@ contract EpochManager is Ownable {
         burnPeriodDuration = _burnPeriodDuration;
     }
 
+    function adjustEmissionPeriod(uint256 _emissionPeriodDuration) public onlyOwner {
+        emissionPeriodDuration = _emissionPeriodDuration;
+    }
+
 }
