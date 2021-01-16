@@ -2,6 +2,7 @@ pragma solidity ^0.6.12;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "./interfaces/ISEED.sol";
 
 /// @title Seasons Epoch Manager
 /// @author Chainvisions
@@ -87,6 +88,7 @@ contract EpochManager is Ownable {
     function burnForSeeds(uint256 _amount) public {
         Epoch storage epoch = epochs;
         require(now <= epoch.burnPeriodTime, "Epoch Manager: BERRY burn period over.");
+        ISEEDS(berry).burnTokens(msg.sender, _amount);
         emit BerryBurned(_amount, msg.sender);
     }
 
@@ -94,6 +96,7 @@ contract EpochManager is Ownable {
     function burnForBerry(uint256 _amount) public {
         Epoch storage epoch = epochs;
         require(now >= epoch.emissionPeriodEndTime, "Epoch Manager: SEEDS emission is still on-going.");
+        ISEEDS(seeds).burnTokens(msg.sender, _amount);
         emit SeedsBurned(_amount, msg.sender);
     }
 

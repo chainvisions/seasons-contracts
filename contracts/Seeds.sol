@@ -1,8 +1,11 @@
 pragma solidity 0.6.12;
 
 import "@pancakeswap/pancake-swap-lib/contracts/token/BEP20/BEP20.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract Seeds is BEP20('SEEDS', 'SEEDS') {
+contract Seeds is BEP20('SEEDS', 'SEEDS'), AccessControl {
+    // Role identifier for minter role.
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     // Contract that distributes transfer fees
     address public feeDistributor;
     // Epoch Manager with the power to remotely burn SEEDS.
@@ -15,14 +18,19 @@ contract Seeds is BEP20('SEEDS', 'SEEDS') {
 
     constructor(address _feeDistributor) public {
         feeDistributor = _feeDistributor;
+        // Grant the contract deployer the default admin role: it will be able
+        // to grant and revoke any roles
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+
     }
 
     function changeDistributor() public {
         require(msg.sender == feeDistributor, "SEEDS: Only the fee distributor can call this function.");
     }
 
-    /// @notice Creates `_amount` token to `_to`. Must only be called by the owner (MasterBush).
+    /// @notice Creates `_amount` token to `_to`. Must only be called by an account with the minter role.
     function mint(address _to, uint256 _amount) public onlyOwner {
+        require(hasRole(MINTER_ROLE, msg.sender), "Caller is not a minter");
         _mint(_to, _amount);
     }
 
