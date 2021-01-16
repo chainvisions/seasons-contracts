@@ -1,12 +1,15 @@
 pragma solidity ^0.6.12;
 
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
 /// @title Seasons Epoch Manager
 /// @author Chainvisions
 /// @notice this contract manages epochs on Seasons and determines the state of the epoch.
 /// @dev Despite being in production, this code does not guarantee any form of safety, I have
 /// taken steps to ensure this contract is bug-free but cannot guarantee anything.
 
-contract EpochManager {
+contract EpochManager is Ownable {
     using SafeMath for uint256;
 
     struct Epoch {
@@ -30,7 +33,7 @@ contract EpochManager {
     event EpochAdvanced(uint256 indexed previousEpoch, uint256 indexed newEpoch, address indexed caller);
 
     // @notice Initializes the Epoch Manager
-    function initializeEpoch() public {
+    function initializeEpoch() public onlyOwner {
 
     }
 
@@ -62,7 +65,7 @@ contract EpochManager {
         emit SeedsBurned(_amount, msg.sender);
     }
 
-    function adjustSupplyThreshold(_threshold) public {
+    function adjustSupplyThreshold(_threshold) public onlyOwner {
         supplyThreshold = _threshold;
     }
 
