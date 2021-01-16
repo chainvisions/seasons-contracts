@@ -17,8 +17,11 @@ contract EpochManager is Ownable {
         uint256 burnPeriodTime;
         uint256 emissionPeriodStartTime;
         uint256 emissionPeriodEndTime;
-        bool seedBurnEnabled;
     }
+
+    // Token addresses
+    address public berry;
+    address public seeds;
 
     // Variable for initializing an epoch.
     bool public managerInitialied;
@@ -36,9 +39,22 @@ contract EpochManager is Ownable {
     event BerryBurned(uint256 indexed burned, address indexed burner);
     event EpochAdvanced(uint256 indexed previousEpoch, uint256 indexed newEpoch, address indexed caller);
 
-    // @notice Initializes the Epoch Manager
-    function initializeEpoch() public onlyOwner {
+    // @notice Initializes the Epoch Manager.
+    function initializeEpoch(address _berry, address _seeds) public onlyOwner {
+        require(managerInitialied != true, "Epoch Manager: Epoch already initialized.");
+        // Initialize tokens.
+        berry = _berry;
+        seeds = _seeds;
 
+        // Create new epoch
+        Epoch storage epoch = epochs;
+        epoch.epochNo = 1;
+        uint256 burnTime = now.add(burnPeriodDuration);
+        epoch.burnPeriodTime = burnTime;
+        uint256 startTime = burnTime.add(86400);
+        epoch.emissionPeriodStartTime = startTime;
+        uint256 endTime = startTime.add(emissionPeriodDuration);
+        epoch.emissionPeriodEndTime = endTime;
     }
 
     /// @notice Advance to the next epoch.
