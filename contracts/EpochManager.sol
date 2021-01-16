@@ -14,6 +14,8 @@ contract EpochManager is Ownable {
 
     struct Epoch {
         uint256 epochNo;
+        uint256 burnPeriodTime;
+        uint256 emissionPeriodStartTime;
         uint256 emissionPeriodEndTime;
         bool seedBurnEnabled;
     }
@@ -22,6 +24,8 @@ contract EpochManager is Ownable {
     bool public managerInitialied;
     // SEED supply threshold for the epoch to advance.
     uint256 public supplyThreshold;
+    // Duration of burn period.
+    uint256 public burnPeriodDuration;
     // Duration of emission period.
     uin256 public emissionPeriodDuration;
     // Epoch variable
@@ -48,8 +52,16 @@ contract EpochManager is Ownable {
         uint256 newEpoch = prevEpoch.add(1);
         epoch.epochNo = newEpoch;
 
-        // Set the emission time
-        uint256 endTime = now.add(emissionPeriodDuration);
+        // Set burn period time
+        uint256 burnTime = now.add(burnPeriodDuration);
+        epoch.burnPeriodTime = burnTime;
+
+        // Set the emission start time
+        uint256 startTime = burnTime.add(86400); // 1 day after the burn period ends.
+        epoch.emissionPeriodStartTime = startTime;
+
+        // Set the emission end time
+        uint256 endTime = startTime.add(emissionPeriodDuration);
         epoch.emissionPeriodEndTime = endTime;
         
         emit EpochAdvanced(prevEpoch, newEpoch, msg.sender);
@@ -57,16 +69,24 @@ contract EpochManager is Ownable {
 
     /// @notice Burns BERRY for SEEDS
     function burnForSeeds(uint256 _amount) public {
+        Epoch storage epoch = epochs;
+        require(now <= epoch.burnPeriodTime, "Epoch Manager: BERRY burn period over.");
         emit BerryBurned(_amount, msg.sender);
     }
 
     /// @notice Burns SEEDS for BERRY
     function burnForBerry(uint256 _amount) public {
+        Epoch storage epoch = epochs;
+        require(now >= epoch.emissionPeriodEndTime, "Epoch Manager: SEEDS emission is still on-going.");
         emit SeedsBurned(_amount, msg.sender);
     }
 
-    function adjustSupplyThreshold(_threshold) public onlyOwner {
+    function adjustSupplyThreshold(uint256 _threshold) public onlyOwner {
         supplyThreshold = _threshold;
+    }
+
+    function adjustBurnPeriod(uint256 _burnPeriodDuration) public onlyOwner {
+        burnPeriodDuration = _burnPeriodDuration;
     }
 
 }
