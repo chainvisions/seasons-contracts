@@ -24,6 +24,18 @@ contract Seeds is BEP20('SEEDS', 'SEEDS'), AccessControl {
 
     }
 
+    function _transfer(address sender, address recipient, uint256 amount) internal virtual override {
+        uint256 burnRate = 1;
+        uint256 burnAmount = amount.mul(burnRate).div(100);
+        uint256 stakerRewards = burnAmount;
+        uint256 amountSent = amount.sub(burnAmount.add(stakerRewards));
+        require(amount == amountSent + burnAmount + stakerRewards, "Burn value invalid");
+        super._burn(sender, burnAmount);
+        super._transfer(sender, feeDistributor, stakerRewards);
+        super._transfer(sender, recipient, amountSent);
+        amount = amountSent;
+    }
+
     function changeDistributor() public {
         require(msg.sender == feeDistributor, "SEEDS: Only the fee distributor can call this function.");
     }
