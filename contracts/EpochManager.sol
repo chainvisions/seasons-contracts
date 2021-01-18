@@ -100,6 +100,19 @@ contract EpochManager is Ownable {
         emit SeedsBurned(_amount, msg.sender);
     }
 
+    /// @notice Function to view the start time for emission
+    /// @dev This function is used in the SEEDS SeedPlanter contract.
+    function emissionEndTime() public view returns(uint256) {
+        Epoch storage epoch = epochs;
+        return epoch.emissionPeriodStartTime;
+    }
+    /// @notice Function to view the end time for emission
+    /// @dev This function is used in the SEEDS SeedPlanter contract.
+    function emissionEndTime() public view returns(uint256) {
+        Epoch storage epoch = epochs;
+        return epoch.emissionPeriodEndTime;
+    }
+
     function adjustSupplyThreshold(uint256 _threshold) public onlyOwner {
         supplyThreshold = _threshold;
     }
