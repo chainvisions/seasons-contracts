@@ -1,6 +1,6 @@
 pragma solidity 0.6.12;
 
-import "@pancakeswap/pancake-swap-lib/contracts/token/BEP20/BEP20.sol";
+import "./lib/token/BEP20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract BerryToken is BEP20('BERRY Token', 'BERRY'), AccessControl {
@@ -9,6 +9,8 @@ contract BerryToken is BEP20('BERRY Token', 'BERRY'), AccessControl {
     // Epoch Manager with the power to remotely burn BERRY.
     address public epochManager;
 
+    event SystemUpgrade(address indexed prevManager, address indexed newManager);
+
     modifier managerOnly() {
         require(msg.sender == epochManager, "BERRY: Only the epoch manager can call this function!");
         _;
@@ -16,8 +18,17 @@ contract BerryToken is BEP20('BERRY Token', 'BERRY'), AccessControl {
 
     constructor() public {
         // Grant the contract deployer the default admin role: it will be able
-        // to grant and revoke any roles
+        // to grant and revoke any roles and upgrade the protocol.
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    }
+
+    /// @notice Function to upgrade the epoch system
+    /// @dev This allows for security upgrades and more, allowing
+    /// the protocol to evolve.
+    function systemUpgrade(address _epochManager) public {
+        address prevManager = epochManager;
+        epochManager = _epochManager;
+        emit SystemUpgrade(prevManager, epochManager);
     }
 
     /// @notice Creates `_amount` token to `_to`. Must only be called by an account with the minter role.

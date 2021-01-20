@@ -1,9 +1,9 @@
 pragma solidity 0.6.12;
 
-import '@pancakeswap/pancake-swap-lib/contracts/math/SafeMath.sol';
-import '@pancakeswap/pancake-swap-lib/contracts/token/BEP20/IBEP20.sol';
-import '@pancakeswap/pancake-swap-lib/contracts/token/BEP20/SafeBEP20.sol';
-import '@pancakeswap/pancake-swap-lib/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/math/SafeMath.sol';
+import './lib/token/IBEP20.sol';
+import './lib/token/SafeBEP20.sol';
+import '@openzeppelin/contracts/access/Ownable.sol';
 
 import "./EpochManager.sol";
 import "./Seeds.sol";
@@ -67,6 +67,7 @@ contract SeedPlanter is Ownable {
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
     event EmergencyWithdraw(address indexed user, uint256 indexed pid, uint256 amount);
+    event SystemUpgrade(address indexed prevManager, address indexed newManager);
 
     constructor(
         Seeds _seeds,
@@ -231,4 +232,14 @@ contract SeedPlanter is Ownable {
         require(_seedsPerBlock > 0, "Cannot be 0!");
         seedsPerBlock = _seedsPerBlock;
     }
+
+    /// @notice Function to upgrade the epoch system
+    /// @dev This allows for security upgrades and more, allowing
+    /// the protocol to evolve.
+    function systemUpgrade(address _epochManager) public onlyOwner {
+        address prevManager = epochManager;
+        epochManager = _epochManager;
+        emit SystemUpgrade(prevManager, epochManager);
+    }
+
 }
