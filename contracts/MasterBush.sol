@@ -1,27 +1,12 @@
 pragma solidity 0.6.12;
 
-import '@pancakeswap/pancake-swap-lib/contracts/math/SafeMath.sol';
-import '@pancakeswap/pancake-swap-lib/contracts/token/BEP20/IBEP20.sol';
-import '@pancakeswap/pancake-swap-lib/contracts/token/BEP20/SafeBEP20.sol';
-import '@pancakeswap/pancake-swap-lib/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/math/SafeMath.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
+import '@openzeppelin/contracts/access/Ownable.sol';
 
-import "./CakeToken.sol";
-import "./SyrupBar.sol";
-
-// import "@nomiclabs/buidler/console.sol";
-
-interface IMigratorChef {
-    // Perform LP token migration from legacy PancakeSwap to CakeSwap.
-    // Take the current LP token address and return the new LP token address.
-    // Migrator should have full access to the caller's LP token.
-    // Return the new LP token address.
-    //
-    // XXX Migrator must have allowance access to PancakeSwap LP tokens.
-    // CakeSwap must mint EXACTLY the same amount of CakeSwap LP tokens or
-    // else something bad will happen. Traditional PancakeSwap does not
-    // do that so be careful!
-    function migrate(IBEP20 token) external returns (IBEP20);
-}
+import "./Berry.sol";
+import "./Jam.sol";
 
 // MasterBush is in charge of creating new BERRIES and turning them into JAM.
 //
@@ -32,7 +17,7 @@ interface IMigratorChef {
 // Have fun reading it. Hopefully it's bug-free. God bless.
 contract MasterBush is Ownable {
     using SafeMath for uint256;
-    using SafeBEP20 for IBEP20;
+    using SafeERC20 for IERC20;
 
     // Info of each user.
     struct UserInfo {
@@ -53,7 +38,7 @@ contract MasterBush is Ownable {
 
     // Info of each pool.
     struct PoolInfo {
-        IBEP20 lpToken;           // Address of LP token contract.
+        IERC20 lpToken;           // Address of LP token contract.
         uint256 allocPoint;       // How many allocation points assigned to this pool. BERRY to distribute per block.
         uint256 lastRewardBlock;  // Last block number that BERRY distribution occurs.
         uint256 accBerryPerShare; // Accumulated BERRY per share, times 1e12. See below.
@@ -120,7 +105,7 @@ contract MasterBush is Ownable {
 
     // Add a new lp to the pool. Can only be called by the owner.
     // XXX DO NOT add the same LP token more than once. Rewards will be messed up if you do.
-    function add(uint256 _allocPoint, IBEP20 _lpToken, bool _withUpdate) public onlyOwner {
+    function add(uint256 _allocPoint, IERC20 _lpToken, bool _withUpdate) public onlyOwner {
         if (_withUpdate) {
             massUpdatePools();
         }
@@ -170,10 +155,10 @@ contract MasterBush is Ownable {
     function migrate(uint256 _pid) public {
         require(address(migrator) != address(0), "migrate: no migrator");
         PoolInfo storage pool = poolInfo[_pid];
-        IBEP20 lpToken = pool.lpToken;
+        IERC20 lpToken = pool.lpToken;
         uint256 bal = lpToken.balanceOf(address(this));
         lpToken.safeApprove(address(migrator), bal);
-        IBEP20 newLpToken = migrator.migrate(lpToken);
+        IERC20 newLpToken = migrator.migrate(lpToken);
         require(bal == newLpToken.balanceOf(address(this)), "migrate: bad");
         pool.lpToken = newLpToken;
     }

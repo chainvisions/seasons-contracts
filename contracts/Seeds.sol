@@ -1,9 +1,10 @@
 pragma solidity 0.6.12;
 
-import "./lib/token/BEP20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "./interfaces/IFeeDistributor.sol";
 
-contract Seeds is BEP20('SEEDS', 'SEEDS'), AccessControl {
+contract Seeds is ERC20('SEEDS', 'SEEDS'), AccessControl {
     // Role identifier for minter role.
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     // Contract that distributes transfer fees
@@ -15,6 +16,11 @@ contract Seeds is BEP20('SEEDS', 'SEEDS'), AccessControl {
 
     modifier managerOnly() {
         require(msg.sender == epochManager, "SEEDS: Only the epoch manager can call this function!");
+        _;
+    }
+
+    modifier adminOnly() {
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "SEEDS: Only the admin can call this function.");
         _;
     }
 
@@ -30,7 +36,7 @@ contract Seeds is BEP20('SEEDS', 'SEEDS'), AccessControl {
     /// @dev This allows for security upgrades and more, allowing
     /// the protocol to evolve.
     function systemUpgrade(address _epochManager) public {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender));
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "SEEDS: Only an admin can perform a system upgrade.");
         address prevManager = epochManager;
         epochManager = _epochManager;
         emit SystemUpgrade(prevManager, epochManager);
@@ -41,20 +47,22 @@ contract Seeds is BEP20('SEEDS', 'SEEDS'), AccessControl {
         uint256 burnAmount = amount.mul(burnRate).div(100);
         uint256 stakerRewards = burnAmount;
         uint256 amountSent = amount.sub(burnAmount.add(stakerRewards));
-        require(amount == amountSent + burnAmount + stakerRewards, "Burn value invalid");
+        require(amount == amountSent + burnAmount + stakerRewards, "SEEDS: Burn value invalid.");
         super._burn(sender, burnAmount);
         super._transfer(sender, feeDistributor, stakerRewards);
         super._transfer(sender, recipient, amountSent);
+        IFeeDistributor(feeDistributor).notifyRewardAmount(stakerRewards);
         amount = amountSent;
     }
 
-    function changeDistributor() public {
-        require(msg.sender == feeDistributor, "SEEDS: Only the fee distributor can call this function.");
+    /// @notice Function to change transfer fee distribution.
+    function changeDistributor(address _feeDistributor) public adminOnly {
+        feeDistributor = _feeDistributor;
     }
 
     /// @notice Creates `_amount` token to `_to`. Must only be called by an account with the minter role.
     function mint(address _to, uint256 _amount) public onlyOwner {
-        require(hasRole(MINTER_ROLE, msg.sender), "Caller is not a minter");
+        require(hasRole(MINTER_ROLE, msg.sender), "SEEDS: Caller is not a minter");
         _mint(_to, _amount);
     }
 

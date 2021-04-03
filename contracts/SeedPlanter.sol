@@ -1,8 +1,8 @@
 pragma solidity 0.6.12;
 
 import '@openzeppelin/contracts/math/SafeMath.sol';
-import './lib/token/IBEP20.sol';
-import './lib/token/SafeBEP20.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 
 import "./EpochManager.sol";
@@ -17,7 +17,7 @@ import "./Seeds.sol";
 // Have fun reading it. Hopefully it's bug-free. God bless.
 contract SeedPlanter is Ownable {
     using SafeMath for uint256;
-    using SafeBEP20 for IBEP20;
+    using SafeERC20 for IERC20;
 
     // Info of each user.
     struct UserInfo {
@@ -38,7 +38,7 @@ contract SeedPlanter is Ownable {
 
     // Info of each pool.
     struct PoolInfo {
-        IBEP20 lpToken;           // Address of LP token contract.
+        IERC20 lpToken;           // Address of LP token contract.
         uint256 allocPoint;       // How many allocation points assigned to this pool. SEEDS to distribute per block.
         uint256 lastRewardBlock;  // Last block number that SEEDS distribution occurs.
         uint256 accSeedsPerShare; // Accumulated SEEDS per share, times 1e12. See below.
@@ -91,7 +91,7 @@ contract SeedPlanter is Ownable {
 
     // Add a new lp to the pool. Can only be called by the owner.
     // XXX DO NOT add the same LP token more than once. Rewards will be messed up if you do.
-    function add(uint256 _allocPoint, IBEP20 _lpToken, bool _withUpdate) public onlyOwner {
+    function add(uint256 _allocPoint, IERC20 _lpToken, bool _withUpdate) public onlyOwner {
         if (_withUpdate) {
             massUpdatePools();
         }
@@ -190,7 +190,7 @@ contract SeedPlanter is Ownable {
     function withdraw(uint256 _pid, uint256 _amount) public {
         PoolInfo storage pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][msg.sender];
-        require(user.amount >= _amount, "withdraw: not good");
+        require(user.amount >= _amount, "Withdraw: not good");
 
         updatePool(_pid);
         uint256 pending = user.amount.mul(pool.accSeedsPerShare).div(1e12).sub(user.rewardDebt);
@@ -229,7 +229,7 @@ contract SeedPlanter is Ownable {
 
     // Adjust the amount of SEEDS emitted every block.
     function adjustEmission(uint256 _seedsPerBlock) public onlyOwner {
-        require(_seedsPerBlock > 0, "Cannot be 0!");
+        require(_seedsPerBlock > 0, "SeedPlanter: seedsPerBlock Cannot be 0!");
         seedsPerBlock = _seedsPerBlock;
     }
 

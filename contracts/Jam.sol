@@ -1,10 +1,9 @@
 pragma solidity 0.6.12;
 
-import "@pancakeswap/pancake-swap-lib/contracts/token/BEP20/BEP20.sol";
-
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./Berry.sol";
 
-contract Jam is BEP20('JAM', 'JAM') {
+contract Jam is ERC20('JAM', 'JAM') {
     BerryToken public berry;
 
     constructor(

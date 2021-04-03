@@ -1,9 +1,9 @@
 pragma solidity 0.6.12;
 
-import "./lib/token/BEP20.sol";
+import "@openzeppelin/contracts//token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract BerryToken is BEP20('BERRY Token', 'BERRY'), AccessControl {
+contract BerryToken is ERC20('BERRY Token', 'BERRY'), AccessControl {
     // Role identifier for minter role.
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     // Epoch Manager with the power to remotely burn BERRY.
@@ -26,6 +26,7 @@ contract BerryToken is BEP20('BERRY Token', 'BERRY'), AccessControl {
     /// @dev This allows for security upgrades and more, allowing
     /// the protocol to evolve.
     function systemUpgrade(address _epochManager) public {
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "SEEDS: Only an admin can perform a system upgrade.");
         address prevManager = epochManager;
         epochManager = _epochManager;
         emit SystemUpgrade(prevManager, epochManager);
@@ -33,7 +34,7 @@ contract BerryToken is BEP20('BERRY Token', 'BERRY'), AccessControl {
 
     /// @notice Creates `_amount` token to `_to`. Must only be called by an account with the minter role.
     function mint(address _to, uint256 _amount) public {
-        require(hasRole(MINTER_ROLE, msg.sender), "Caller is not a minter");
+        require(hasRole(MINTER_ROLE, msg.sender), "BERRY: Caller is not a minter");
         _mint(_to, _amount);
     }
 
