@@ -42,6 +42,7 @@ contract SeedPlanter is Ownable {
         uint256 allocPoint;       // How many allocation points assigned to this pool. SEEDS to distribute per block.
         uint256 lastRewardBlock;  // Last block number that SEEDS distribution occurs.
         uint256 accSeedsPerShare; // Accumulated SEEDS per share, times 1e12. See below.
+        uint256 totalStaked;      // Simplifies the process of calculating pool TVL.
     }
 
     // The SEEDS TOKEN!
@@ -101,7 +102,8 @@ contract SeedPlanter is Ownable {
             lpToken: _lpToken,
             allocPoint: _allocPoint,
             lastRewardBlock: lastRewardBlock,
-            accBerryPerShare: 0
+            accSeedsPerShare: 0,
+            totalStakeds: 0
         }));
     }
 
@@ -180,6 +182,7 @@ contract SeedPlanter is Ownable {
         }
         if (_amount > 0) {
             pool.lpToken.safeTransferFrom(address(msg.sender), address(this), _amount);
+            pool.totalStaked = pool.totalStaked.add(_amount);
             user.amount = user.amount.add(_amount);
         }
         user.rewardDebt = user.amount.mul(pool.accSeedsPerShare).div(1e12);
@@ -199,6 +202,7 @@ contract SeedPlanter is Ownable {
         }
         if(_amount > 0) {
             user.amount = user.amount.sub(_amount);
+            pool.totalStaked = pool.totalStaked.sub(_amount);
             pool.lpToken.safeTransfer(address(msg.sender), _amount);
         }
         user.rewardDebt = user.amount.mul(pool.accSeedsPerShare).div(1e12);
@@ -211,6 +215,7 @@ contract SeedPlanter is Ownable {
         UserInfo storage user = userInfo[_pid][msg.sender];
         pool.lpToken.safeTransfer(address(msg.sender), user.amount);
         emit EmergencyWithdraw(msg.sender, _pid, user.amount);
+        pool.totalStaked = pool.totalStaked.sub(user.amount);
         user.amount = 0;
         user.rewardDebt = 0;
     }
